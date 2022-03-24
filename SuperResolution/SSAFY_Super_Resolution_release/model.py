@@ -19,7 +19,7 @@ class SuperResolutionModel(tf.keras.models.Model):
         # Vars
         self.W = w
         self.H = h
-
+    
     # Compile Model as tensorflow graph
     def build_graph(self):
         input_shape = (1, self.W, self.H, 3)
