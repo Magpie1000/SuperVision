@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.js"
+      integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div>
+      <video id="live" autoplay></video>
+    </div>
+    <div>
+      <canvas id="canvas" width="240px" height="320px"> </canvas>
+      <button onclick="readCanvas()">소켓 통신</button>
+    </div>
+    <div>
+      <img id="img" width="240px" />
+    </div>
+  </body>
+  <script>
+    var video = document.getElementById("live");
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+    var socket = io.connect("http://localhost:5000/normal"); // 웹소켓 연결
+    var $img = $("#img");
+
+    // 웹캠으로부터 비디오 리소스 얻어오기
+    navigator.mediaDevices
+      .getUserMedia({
+        video: true,
+        audio: false,
+      })
+      .then(gotStream);
+
+    function gotStream(stream) {
+      console.log(stream);
+      video.srcObject = stream;
+    }
+
+    // 캔버스에 한 프레임씩 그리기
+    function drawCanvase() {
+      //console.log(video.width)
+      ctx.drawImage(video, 200, 160, 240, 320, 0, 0, 240, 320);
+      readCanvas();
+    }
+    console.log(video);
+    // 1초에 15번 캔버스에 그리기 : 15 fps
+    setInterval(drawCanvase, 1000 / 10);
+
+    // 캔버스로 부터 한 프레임씩 읽기, 읽은 후 소켓 서버에 전송
+    function readCanvas() {
+      var canvasData = canvas.toDataURL("image/jpeg", 1);
+
+      //console.log(canvasData);
+      var decoded = atob(canvasData.split(",")[1]);
+      var arr = [];
+      for (var i = 0; i < decoded.length; i++) {
+        arr.push(decoded.charCodeAt(i));
+      }
+      var image = new Blob([new Uint8Array(arr)], { type: "image/jpeg" });
+      socket.send(image);
+    }
+
+    // 소켓에서 필터링 된 이미지 불러와서 img 엘리먼트에 그리기
+    socket.on("message", function (data) {
+      console.log(data);
+      var arrayBufferView = new Uint8Array(data);
+      var blob = new Blob([arrayBufferView], { type: "image/jpeg" });
+
+      document.getElementById("img").src = URL.createObjectURL(blob);
+    });
+  </script>
+</html>
