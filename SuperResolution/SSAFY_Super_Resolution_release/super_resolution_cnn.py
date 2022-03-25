@@ -10,16 +10,15 @@ from PIL import Image  # Pillow module
 from model import make_model,SuperResolutionModel
 
 
-model=make_model(320,240)
-
 MAX_PEL_VALUE=255
 
-## model과 인풋이 들어오면 sr을 한 numpy 배열 보냄
-def get_output(model,input):
+## model과 인풋이 들어오면 sr을 한 Image를 보냄
+def get_output(model,image):
+    input=tf.convert_to_tensor(image, tf.float32)
     out_ = model(input[tf.newaxis])
     out = tf.clip_by_value(out_, 0, MAX_PEL_VALUE)
 
-    return out[0]
+    return Image.fromarray(tf.cast(out[0], tf.uint8).numpy())
 
 
 def test(input_file):
