@@ -145,4 +145,4 @@ def sr_cnn_filter():
 
 
 if __name__ == "__main__":
-    my_socket.run(app, port=5000)
+    my_socket.run(app,host='0.0.0.0', port=5000)
