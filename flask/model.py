@@ -22,7 +22,7 @@ class SuperResolutionModel(tf.keras.models.Model):
 
     # Compile Model as tensorflow graph
     def build_graph(self):
-        input_shape = (1, self.W, self.H, 3)
+        input_shape = (1,  self.H ,self.W ,3)
         self.build(input_shape)
 
         # Test graph on zero-input
@@ -32,12 +32,12 @@ class SuperResolutionModel(tf.keras.models.Model):
     # Main hypothesis function i.e model_output = call(model_input)
     def call(self, x):
         # Bias
-        x_bi = tf.image.resize(x, (self.W * 2, self.H * 2), method='lanczos5')
+        x_bi = tf.image.resize(x, ( self.H * 3,self.W * 3), method='bilinear')
 
         # Conv Layers
         x = self.conv1(x)
         x = self.conv2(x)
-        x = tf.image.resize(x, (self.W * 2, self.H * 2), method='lanczos5')
+        x = tf.image.resize(x, (self.H * 3,self.W * 3 ), method='bilinear')
         x = self.conv3(x)
 
         # Final output

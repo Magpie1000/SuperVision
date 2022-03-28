@@ -86,6 +86,7 @@ def handle_message(data):
     buf = BytesIO()
     hr_image.save(buf, format="JPEG")
     #image.save(buf, format="JPEG")
+    print(image.size,hr_image.size)
     send(buf.getvalue())
 
 

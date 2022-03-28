@@ -68,6 +68,7 @@ def handle_message(data):
     buf = BytesIO()
     hr_image.save(buf, format="JPEG")
     #image.save(buf, format="JPEG")
+    print(image.size,hr_image.size)
     send(buf.getvalue())
     
 @my_socket.on("message",namespace='/normal')
@@ -85,6 +86,7 @@ def handle_message(data):
     buf = BytesIO()
     hr_image.save(buf, format="JPEG")
     #image.save(buf, format="JPEG")
+    print(image.size,hr_image.size)
     send(buf.getvalue())
 
 
@@ -145,4 +147,4 @@ def sr_cnn_filter():
 
 
 if __name__ == "__main__":
-    my_socket.run(app,host='0.0.0.0', port=5000)
+    my_socket.run(app, host='0.0.0.0',port=5000)
