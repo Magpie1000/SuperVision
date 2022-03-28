@@ -1,3 +1,4 @@
+from argparse import Namespace
 from operator import mod
 from flask import *
 import tensorflow as tf
@@ -8,6 +9,7 @@ from base64 import b64encode
 from model import make_model,SuperResolutionModel
 from io import BytesIO, StringIO
 import super_resolution_normal
+from inference import super_resolution
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret"
@@ -25,6 +27,32 @@ def welcome():
 def welcome():
     print("normal socket connected")
     # load_super_resolution_model()
+    
+    
+
+@my_socket.on("connect")
+def welcome():
+    print("gan socket connected")
+    # load_super_resolution_model()
+
+
+
+@my_socket.on("message",namespace='/gan')
+def handle_message(data):
+    # 소켓통신에서 blob으로 이미지를 넘기면 바이트배열이 넘어오므로 바이트 변환하여 이미지를 읽은 후 이 이미지를 가지고 super resolution 진행 후 해당 이미지를 다시 전송
+    image = Image.open(BytesIO(data))
+    # image.show()
+
+    # call super resolution module
+
+    # example
+    hr_image = super_resolution(image)
+    hr_image = Image.fromarray(hr_image)
+    #hr_image.show()
+    buf = BytesIO()
+    hr_image.save(buf, format="JPEG")
+    #image.save(buf, format="JPEG")
+    send(buf.getvalue())
 
 
 @my_socket.on("message",namespace='/cnn')
@@ -40,6 +68,7 @@ def handle_message(data):
     buf = BytesIO()
     hr_image.save(buf, format="JPEG")
     #image.save(buf, format="JPEG")
+    print(image.size,hr_image.size)
     send(buf.getvalue())
     
 @my_socket.on("message",namespace='/normal')
@@ -58,9 +87,24 @@ def handle_message(data):
     hr_image.save(buf, format="JPEG")
     #image.save(buf, format="JPEG")
     send(buf.getvalue())
+
+
+@app.route("/image/gan", methods=["POST"])
+def image_process():
+    original_image = request.files["image"]
     
+    original_image = Image.open(original_image)
+    # original_image.show()
+    hr_image = super_resolution(original_image)
+    hr_image = Image.fromarray(hr_image)
+    # hr_image.show()
+    buf = BytesIO()
+    hr_image.save(buf, format="JPEG", quality=100)
+    response = make_response(b64encode(buf.getvalue()))
+    response.headers.set("Content-Type", "image/jpeg")
+    return response
     
-@app.route('/normal_image',methods=['POST'])
+@app.route('/image/normal',methods=['POST'])
 def sr_normal_filter():
     print("@@@post image")
     input_image = request.files['image']
@@ -74,7 +118,7 @@ def sr_normal_filter():
     response.headers.set("Content-Type", "image/jpeg")
     return response
 
-@app.route('/cnn_image',methods=['POST'])
+@app.route('/image/cnn',methods=['POST'])
 def sr_cnn_filter():
     print("@@@cnn post image")
     input_image = request.files['image']
@@ -102,4 +146,4 @@ def sr_cnn_filter():
 
 
 if __name__ == "__main__":
-    my_socket.run(app, port=5000)
+    my_socket.run(app, host='0.0.0.0',port=5000)
