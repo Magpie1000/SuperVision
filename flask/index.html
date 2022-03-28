@@ -16,21 +16,26 @@
       파일명 : <input type="file" name="image" />
       <button type="button" onclick="post()">제출하기</button>
     </form>
+
     <img id="img" />
+    <img id="img2" />
   </body>
   <script>
     function post() {
       let form = $("#upload")[0];
       let data = new FormData(form);
       $.ajax({
-        url: "http://localhost:5000/image/normal?mode=BICUBIC&&rate=1.0",
+        url: "http://localhost:5000/image",
         type: "POST",
         data,
         contentType: false,
         processData: false,
         success: function (data) {
           console.log(data);
-          document.getElementById("img").src = "data:image/jpeg;base64," + data;
+          document.getElementById("img").src = "data:image/jpeg;base64," + data.normal_upscaled;
+          document.getElementById("img2").src = "data:image/jpeg;base64," + data.sr_upscaled;
+          console.log(data.normal_vmaf_score);
+          console.log(data.sr_vmaf_score);
         },
       });
     }
