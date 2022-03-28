@@ -25,14 +25,15 @@
       <button onclick="readCanvas()">소켓 통신</button>
     </div>
     <div>
-      <img id="img" width="320px" />
+      <img id="img" width="960px" height="720px" />
     </div>
   </body>
   <script>
     var video = document.getElementById("live");
     var canvas = document.getElementById("canvas");
     var ctx = canvas.getContext("2d");
-    var socket = io.connect("http://j6s005.p.ssafy.io:5001/cnn"); // 웹소켓 연결
+    // var socket = io.connect("http://j6s005.p.ssafy.io:5000/cnn"); // 웹소켓 연결
+    var socket = io.connect("http://70.12.130.102:5000/cnn"); // 웹소켓 연결
     var $img = $("#img");
 
     // 웹캠으로부터 비디오 리소스 얻어오기
@@ -56,11 +57,11 @@
     }
     console.log(video);
     // 1초에 15번 캔버스에 그리기 : 15 fps
-    setInterval(drawCanvase, 1000 / 10);
+    setInterval(drawCanvase, 1000 / 15);
 
     // 캔버스로 부터 한 프레임씩 읽기, 읽은 후 소켓 서버에 전송
     function readCanvas() {
-      var canvasData = canvas.toDataURL("image/jpeg", 1);
+      var canvasData = canvas.toDataURL("image/jpeg", 0.5);
 
       //console.log(canvasData);
       var decoded = atob(canvasData.split(",")[1]);
