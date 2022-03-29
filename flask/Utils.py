@@ -24,7 +24,7 @@ def save_to_yuv(output_file, out):
 
 def get_vmaf_score(sr_path, normal_path, width, height):
     if sys.platform == "linux" or sys.platform == "linux2":
-        vmaf_path = "vmaf"
+        vmaf_path = "./vmaf"
     else:
         vmaf_path = "vmaf.exe"
     cmd = f"{vmaf_path} -r {normal_path} -d {sr_path} -w {width} -h {height} -p 444 -b 8 --feature psnr -o output.xml"
