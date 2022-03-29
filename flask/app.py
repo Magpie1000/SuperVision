@@ -109,6 +109,9 @@ def handle_image_request():
     lr_sr_upscaled = super_resolution(lr_image)
     lr_sr_upscaled = Image.fromarray(lr_sr_upscaled)
 
+    lr_lanczos_upscaled = lr_lanczos_upscaled.resize((width, height))
+    lr_sr_upscaled = lr_sr_upscaled.resize((width, height))
+
     original_file_name = str(uuid4()) + ".yuv"
     sr_file_name = str(uuid4()) + ".yuv"
     normal_file_name = str(uuid4()) + ".yuv"
