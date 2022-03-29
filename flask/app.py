@@ -96,8 +96,14 @@ def handle_message(data):
 @app.route("/image", methods=["POST"])
 def handle_image_request():
     # upscale with AI Super Resolution filter and Lanczos Interpollation
-    original_image = request.files["image"]
-    original_image = Image.open(original_image)
+    original_image_name = request.files["image"]
+
+    original_image = Image.open(original_image_name)
+    
+    # if image format is PNG convert to JPEG
+    if "png" in str(original_image_name).lower():
+        original_image = original_image.convert("RGB")
+
     lanczos_upscaled = super_resolution_normal_filter(original_image, mode="LANCZOS", x=4)
     sr_upscaled = super_resolution(original_image)
     sr_upscaled = Image.fromarray(sr_upscaled)
