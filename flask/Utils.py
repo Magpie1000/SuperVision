@@ -1,5 +1,6 @@
-from concurrent.futures import process
 import os
+import subprocess
+import shlex
 import sys
 import tensorflow as tf
 from xml.etree.ElementTree import parse
@@ -31,7 +32,14 @@ def get_vmaf_score(sr_path, normal_path, width, height):
     return run_shell(cmd)
     
 def run_shell(cmd):
-    os.system(cmd)
+    process = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE)
+    while True:
+        output = process.stdout.readline()
+        if output == b"" and process.poll() is not None:
+            break
+        if output:
+            print(output.strip())
+    process.poll()
     tree = parse("output.xml")
     pooled_metrics = tree.find("pooled_metrics")
     metric = pooled_metrics.find("metric[15]")
