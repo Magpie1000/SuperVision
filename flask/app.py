@@ -110,8 +110,8 @@ def handle_image_request():
     
     # save to yuv444 format each Images
     width, height = original_image.size
-    lr_image = original_image.resize((int(width/4), int(height/4)))
-    lr_lanczos_upscaled = super_resolution_normal_filter(lr_image, mode="LANCZOS", x=4)
+    lr_image = original_image.resize((int(width/2), int(height/2)))
+    lr_lanczos_upscaled = super_resolution_normal_filter(lr_image, mode="LANCZOS", x=2)
     lr_sr_upscaled = super_resolution(lr_image)
     lr_sr_upscaled = Image.fromarray(lr_sr_upscaled)
 
