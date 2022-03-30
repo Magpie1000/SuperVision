@@ -2,7 +2,14 @@ import os
 import subprocess
 import shlex
 import sys
+from unittest import result
+import cv2
+import random
+import colorsys
+import numpy as np
 import tensorflow as tf
+from tensorflow.python.saved_model import tag_constants
+from PIL import Image
 from xml.etree.ElementTree import parse
 
 def convert_jpg_to_yuv_tensor(image):
@@ -46,3 +53,70 @@ def run_shell(cmd):
     vmaf_score = metric.attrib["min"]
     os.remove("output.xml")
     return vmaf_score
+
+def detect(original_image):
+    image = cv2.cvtColor(np.array(original_image), cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (416, 416))
+    image = image / 255.
+
+    images = []
+    for i in range(1):
+        images.append(image)
+    images = np.asarray(images).astype(np.float32)
+
+    saved_model_loaded = tf.saved_model.load("./weights/yolov4-416", tags=[tag_constants.SERVING])
+    infer = saved_model_loaded.signatures["serving_default"]
+    batch_data = tf.constant(images)
+    pred_bbox = infer(batch_data)
+    for key, value in pred_bbox.items():
+        boxes = value[:, :, 0:4]
+        pred_conf = value[:, :, 4:]
+
+    boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
+        boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
+        scores=tf.reshape(pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+        max_output_size_per_class=50,
+        max_total_size=50,
+        iou_threshold=0.45,
+        score_threshold=0.25
+    )
+    pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
+
+    return get_object_coordinations_with_class(original_image, pred_bbox)
+
+def read_class_names(class_file_name):
+    names ={}
+    with open(class_file_name, "r") as data:
+        for ID, name in enumerate(data):
+            names[ID] = name.strip("\n")
+    return names
+
+def get_object_coordinations_with_class(image, bboxes, classes=read_class_names("./data/classes/coco.names")):
+    num_classes = len(classes)
+    w, h = image.size
+    hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
+    colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+    colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+
+    random.seed(0)
+    random.shuffle(colors)
+    random.seed(None)
+
+    result = []
+    out_boxes, out_scores, out_classes, num_boxes = bboxes
+    for i in range(num_boxes[0]):
+        if int(out_classes[0][i]) < 0 or int(out_classes[0][i]) > num_classes: continue
+        coor = out_boxes[0][i]
+        coor[0] = int(coor[0] * h)
+        coor[2] = int(coor[2] * h)
+        coor[1] = int(coor[1] * w)
+        coor[3] = int(coor[3] * w)
+
+        score = out_scores[0][i]
+        class_index = int(out_classes[0][i])
+        info = (classes[class_index], str(coor[0]), str(coor[1]), str(coor[2]), str(coor[3]), str(score))
+        result.append(info)
+    
+    return result
+
+

@@ -1,20 +1,17 @@
-from argparse import Namespace
-from operator import mod
 from flask import *
 from flask_cors import CORS
-from importlib_metadata import files
 import tensorflow as tf
 from flask_socketio import *
 from PIL import Image
 from super_resolution_normal import super_resolution_normal_filter
 from super_resolution_cnn import *
-from base64 import b64encode, b64decode
-from model import make_model,SuperResolutionModel
-from io import BytesIO, StringIO
+from base64 import b64encode
+from model import make_model
+from io import BytesIO
 import super_resolution_normal
 from inference import super_resolution
 from uuid import uuid4
-from Utils import convert_jpg_to_yuv_tensor, save_to_yuv, get_vmaf_score
+from Utils import convert_jpg_to_yuv_tensor, save_to_yuv, get_vmaf_score, detect
 from os import remove
 
 app = Flask(__name__)
@@ -147,7 +144,11 @@ def handle_image_request():
         "normal_vmaf_score" : normal_vmaf_score
     }
     
-
+@app.route("/detect", methods=["POST"])
+def handle_detect_request():
+    image = request.files["image"]
+    image = Image.open(image)
+    return jsonify(detect(image))
 
 @app.route("/image/gan", methods=["POST"])
 def image_process():
