@@ -2,7 +2,6 @@ import os
 import subprocess
 import shlex
 import sys
-from unittest import result
 import cv2
 import random
 import colorsys
