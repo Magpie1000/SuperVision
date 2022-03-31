@@ -158,12 +158,10 @@ def handle_crop_request():
     image = load_from_cache("image")
 
     coor = request.get_json()["coor"]
-    print(coor)
     cropped_image = image.crop((int(float(coor["x1"])), int(float(coor["y1"])), int(float(coor["x2"])), int(float(coor["y2"]))))
 
     cropped_image = super_resolution(cropped_image)
     cropped_image = Image.fromarray(cropped_image)
-    cropped_image.show()
     buffer = BytesIO()
     cropped_image.save(buffer, "JPEG")
     return {"cropped_upscaled" : b64encode(buffer.getvalue()).decode("utf-8")}
