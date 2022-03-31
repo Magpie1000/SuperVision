@@ -11,7 +11,7 @@ from io import BytesIO
 import super_resolution_normal
 from inference import super_resolution
 from uuid import uuid4
-from Utils import convert_jpg_to_yuv_tensor, save_to_yuv, get_vmaf_score, detect
+from Utils import convert_jpg_to_yuv_tensor, save_to_yuv, get_vmaf_score, detect, save_at_cache, load_from_cache
 from os import remove
 
 app = Flask(__name__)
@@ -148,7 +148,49 @@ def handle_image_request():
 def handle_detect_request():
     image = request.files["image"]
     image = Image.open(image)
+    # save image into redis cache
+    save_at_cache(image)
     return jsonify(detect(image))
+
+@app.route("/crop", methods=["POST"])
+def handle_crop_request():
+    #load image from redis cache
+    image = load_from_cache("image")
+
+    coor = request.get_json()["coor"]
+    print(coor)
+    cropped_image = image.crop((int(float(coor["x1"])), int(float(coor["y1"])), int(float(coor["x2"])), int(float(coor["y2"]))))
+
+    cropped_image = super_resolution(cropped_image)
+    cropped_image = Image.fromarray(cropped_image)
+    cropped_image.show()
+    buffer = BytesIO()
+    cropped_image.save(buffer, "JPEG")
+    return {"cropped_upscaled" : b64encode(buffer.getvalue()).decode("utf-8")}
+
+@app.route("/crop-set", methods=["POST"])
+def handle_crop_list_request():
+    # load image from redis cache
+    image = load_from_cache("image")
+
+    coor_list = request.get_json()["list"]
+
+    result = []
+
+    for coor in coor_list:
+        cropped_image = image.crop((int(float(coor["x1"])), int(float(coor["y1"])), int(float(coor["x2"])), int(float(coor["y2"]))))
+
+        cropped_image = super_resolution(cropped_image)
+        cropped_image = Image.fromarray(cropped_image)
+
+        buffer = BytesIO()
+        cropped_image.save(buffer, "JPEG")
+        info = {"cropped_upscaled" : b64encode(buffer.getvalue()).decode("utf-8")}
+        result.append(info)
+
+    return jsonify(result)
+
+
 
 @app.route("/image/gan", methods=["POST"])
 def image_process():

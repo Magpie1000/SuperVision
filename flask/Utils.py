@@ -7,9 +7,12 @@ import random
 import colorsys
 import numpy as np
 import tensorflow as tf
+import redis
 from tensorflow.python.saved_model import tag_constants
-from PIL import Image
 from xml.etree.ElementTree import parse
+from io import BytesIO
+from base64 import b64decode, b64encode
+from PIL import Image
 
 def convert_jpg_to_yuv_tensor(image):
     return tf.convert_to_tensor(image.convert("YCbCr"), tf.float32)
@@ -115,10 +118,10 @@ def get_object_coordinations_with_class(image, bboxes, classes=read_class_names(
         class_index = int(out_classes[0][i])
         info = {
             "class" : classes[class_index], 
-            "x1" : str(coor[0]), 
-            "y1" : str(coor[1]), 
-            "x2" : str(coor[2]), 
-            "y2" : str(coor[3]), 
+            "y1" : str(coor[0]), 
+            "x1" : str(coor[1]), 
+            "y2" : str(coor[2]), 
+            "x2" : str(coor[3]), 
             "score" : str(score)
             }
         result.append(info)
@@ -126,3 +129,20 @@ def get_object_coordinations_with_class(image, bboxes, classes=read_class_names(
     return result
 
 
+def save_at_cache(image):
+    try:
+        con = redis.StrictRedis(host="localhost",port=6379,db=2)
+        buffer = BytesIO()
+        image.save(buffer, "JPEG")
+        con.set("image", b64encode(buffer.getvalue()), 3600) # expire cache after 1hour
+
+    except Exception as e:
+        print(e)
+        
+def load_from_cache(key):
+    try:
+        con = redis.StrictRedis(host="localhost",port=6379,db=2)
+        image_bytes = con.get(key)
+        return Image.open(BytesIO(b64decode(image_bytes)))
+    except Exception as e:
+        print(e)
