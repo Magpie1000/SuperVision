@@ -69,8 +69,6 @@ def handle_message(data):
     # call super resolution module
     # example
     hr_image = get_output(model,image)
-    hr_image = Image.fromarray(tf.cast(hr_image, tf.uint8).numpy())
-    #hr_image.show()
     buf = BytesIO()
     hr_image.save(buf, format="JPEG")
     #image.save(buf, format="JPEG")
@@ -195,7 +193,6 @@ def sr_cnn_filter():
         return "BAD REQUEST"
 
     hr_image = get_output(model,image)
-    hr_image = Image.fromarray(tf.cast(hr_image, tf.uint8).numpy())
 
     buf = BytesIO()
     hr_image.save(buf, format="JPEG", quality=100)
