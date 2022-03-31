@@ -144,8 +144,11 @@ def handle_image_request():
     
 @app.route("/detect", methods=["POST"])
 def handle_detect_request():
-    image = request.files["image"]
-    image = Image.open(image)
+    image_name = request.files["image"]
+    image = Image.open(image_name)
+    # if image format is PNG convert to JPEG
+    if "png" in str(image_name).lower():
+        image = image.convert("RGB")
     # save image into redis cache
     save_at_cache(image)
     return jsonify(detect(image))
