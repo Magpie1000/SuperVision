@@ -113,7 +113,14 @@ def get_object_coordinations_with_class(image, bboxes, classes=read_class_names(
 
         score = out_scores[0][i]
         class_index = int(out_classes[0][i])
-        info = (classes[class_index], str(coor[0]), str(coor[1]), str(coor[2]), str(coor[3]), str(score))
+        info = {
+            "class" : classes[class_index], 
+            "x1" : str(coor[0]), 
+            "y1" : str(coor[1]), 
+            "x2" : str(coor[2]), 
+            "y2" : str(coor[3]), 
+            "score" : str(score)
+            }
         result.append(info)
     
     return result
