@@ -13,6 +13,10 @@ from xml.etree.ElementTree import parse
 from io import BytesIO
 from base64 import b64decode, b64encode
 from PIL import Image
+from super_resolution_normal import super_resolution_normal_filter
+from inference import super_resolution
+from uuid import uuid4
+
 
 def convert_jpg_to_yuv_tensor(image):
     return tf.convert_to_tensor(image.convert("YCbCr"), tf.float32)
@@ -55,6 +59,56 @@ def run_shell(cmd):
     vmaf_score = metric.attrib["min"]
     os.remove("output.xml")
     return vmaf_score
+
+def get_upscaled_images_with_vmaf_scores(original_image):
+    lanczos_upscaled = super_resolution_normal_filter(original_image, mode="NEAREST", x=4)
+    sr_upscaled = super_resolution(original_image)
+    sr_upscaled = Image.fromarray(sr_upscaled)
+    
+    # save to yuv444 format each Images
+    width, height = original_image.size
+    lr_image = original_image.resize((int(width/2), int(height/2)))
+    lr_lanczos_upscaled = super_resolution_normal_filter(lr_image, mode="NEAREST", x=2)
+    lr_sr_upscaled = super_resolution(lr_image)
+    lr_sr_upscaled = Image.fromarray(lr_sr_upscaled)
+
+    lr_lanczos_upscaled = lr_lanczos_upscaled.resize((width, height))
+    lr_sr_upscaled = lr_sr_upscaled.resize((width, height))
+    original_image.show(title="original")
+    lr_lanczos_upscaled.show(title="normal1")
+    lr_sr_upscaled.show(title="ai1")
+    lanczos_upscaled.show(title="normal2")
+    sr_upscaled.show(title="ai2")
+
+    original_file_name = str(uuid4()) + ".yuv"
+    sr_file_name = str(uuid4()) + ".yuv"
+    normal_file_name = str(uuid4()) + ".yuv"
+    save_to_yuv(original_file_name, convert_jpg_to_yuv_tensor(original_image))
+    save_to_yuv(sr_file_name, convert_jpg_to_yuv_tensor(lr_sr_upscaled))
+    save_to_yuv(normal_file_name, convert_jpg_to_yuv_tensor(lr_lanczos_upscaled))
+    # get VMAF score
+
+    normal_vmaf_score = get_vmaf_score(normal_file_name, original_file_name, width, height)
+    sr_vmaf_score = get_vmaf_score(sr_file_name, original_file_name, width, height)
+
+    os.remove(original_file_name)
+    os.remove(sr_file_name)
+    os.remove(normal_file_name)
+
+    sr_buf = BytesIO()
+    normal_buf = BytesIO()
+
+    sr_upscaled.save(sr_buf, "JPEG")
+    lanczos_upscaled.save(normal_buf, "JPEG")
+
+    # return responese with upscaled images and VMAF result
+    return {
+        "sr_upscaled" : b64encode(sr_buf.getvalue()).decode("utf-8"),
+        "normal_upscaled" : b64encode(normal_buf.getvalue()).decode("utf-8"),
+        "sr_vmaf_score" : sr_vmaf_score,
+        "normal_vmaf_score" : normal_vmaf_score
+    }
+
 
 def detect(original_image):
     image = cv2.cvtColor(np.array(original_image), cv2.COLOR_BGR2RGB)

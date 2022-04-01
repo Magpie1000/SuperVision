@@ -3,16 +3,13 @@ from flask_cors import CORS
 import tensorflow as tf
 from flask_socketio import *
 from PIL import Image
-from super_resolution_normal import super_resolution_normal_filter
 from super_resolution_cnn import *
 from base64 import b64encode
 from model import make_model
 from io import BytesIO
 import super_resolution_normal
 from inference import super_resolution
-from uuid import uuid4
-from Utils import convert_jpg_to_yuv_tensor, save_to_yuv, get_vmaf_score, detect, save_at_cache, load_from_cache
-from os import remove
+from Utils import get_upscaled_images_with_vmaf_scores, detect, save_at_cache, load_from_cache
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret"
@@ -99,48 +96,7 @@ def handle_image_request():
     if "png" in str(original_image_name).lower():
         original_image = original_image.convert("RGB")
 
-    lanczos_upscaled = super_resolution_normal_filter(original_image, mode="LANCZOS", x=4)
-    sr_upscaled = super_resolution(original_image)
-    sr_upscaled = Image.fromarray(sr_upscaled)
-    
-    # save to yuv444 format each Images
-    width, height = original_image.size
-    lr_image = original_image.resize((int(width/2), int(height/2)))
-    lr_lanczos_upscaled = super_resolution_normal_filter(lr_image, mode="LANCZOS", x=2)
-    lr_sr_upscaled = super_resolution(lr_image)
-    lr_sr_upscaled = Image.fromarray(lr_sr_upscaled)
-
-    lr_lanczos_upscaled = lr_lanczos_upscaled.resize((width, height))
-    lr_sr_upscaled = lr_sr_upscaled.resize((width, height))
-
-    original_file_name = str(uuid4()) + ".yuv"
-    sr_file_name = str(uuid4()) + ".yuv"
-    normal_file_name = str(uuid4()) + ".yuv"
-    save_to_yuv(original_file_name, convert_jpg_to_yuv_tensor(original_image))
-    save_to_yuv(sr_file_name, convert_jpg_to_yuv_tensor(lr_sr_upscaled))
-    save_to_yuv(normal_file_name, convert_jpg_to_yuv_tensor(lr_lanczos_upscaled))
-    # get VMAF score
-
-    normal_vmaf_score = get_vmaf_score(normal_file_name, original_file_name, width, height)
-    sr_vmaf_score = get_vmaf_score(sr_file_name, original_file_name, width, height)
-
-    remove(original_file_name)
-    remove(sr_file_name)
-    remove(normal_file_name)
-
-    sr_buf = BytesIO()
-    normal_buf = BytesIO()
-
-    sr_upscaled.save(sr_buf, "JPEG")
-    lanczos_upscaled.save(normal_buf, "JPEG")
-
-    # return responese with upscaled images and VMAF result
-    return {
-        "sr_upscaled" : b64encode(sr_buf.getvalue()).decode("utf-8"),
-        "normal_upscaled" : b64encode(normal_buf.getvalue()).decode("utf-8"),
-        "sr_vmaf_score" : sr_vmaf_score,
-        "normal_vmaf_score" : normal_vmaf_score
-    }
+    return get_upscaled_images_with_vmaf_scores(original_image)
     
 @app.route("/detect", methods=["POST"])
 def handle_detect_request():
@@ -161,11 +117,11 @@ def handle_crop_request():
     coor = request.get_json()["coor"]
     cropped_image = image.crop((int(float(coor["x1"])), int(float(coor["y1"])), int(float(coor["x2"])), int(float(coor["y2"]))))
 
-    cropped_image = super_resolution(cropped_image)
-    cropped_image = Image.fromarray(cropped_image)
     buffer = BytesIO()
     cropped_image.save(buffer, "JPEG")
-    return {"cropped_upscaled" : b64encode(buffer.getvalue()).decode("utf-8")}
+    res = get_upscaled_images_with_vmaf_scores(cropped_image)
+    res["cropped"] = b64encode(buffer.getvalue()).decode("utf-8")
+    return res
 
 @app.route("/crop-set", methods=["POST"])
 def handle_crop_list_request():
