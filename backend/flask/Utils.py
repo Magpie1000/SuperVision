@@ -74,11 +74,6 @@ def get_upscaled_images_with_vmaf_scores(original_image):
 
     lr_lanczos_upscaled = lr_lanczos_upscaled.resize((width, height))
     lr_sr_upscaled = lr_sr_upscaled.resize((width, height))
-    original_image.show(title="original")
-    lr_lanczos_upscaled.show(title="normal1")
-    lr_sr_upscaled.show(title="ai1")
-    lanczos_upscaled.show(title="normal2")
-    sr_upscaled.show(title="ai2")
 
     original_file_name = str(uuid4()) + ".yuv"
     sr_file_name = str(uuid4()) + ".yuv"
@@ -120,7 +115,7 @@ def detect(original_image):
         images.append(image)
     images = np.asarray(images).astype(np.float32)
 
-    saved_model_loaded = tf.saved_model.load("./weights/yolov4-416", tags=[tag_constants.SERVING])
+    saved_model_loaded = tf.saved_model.load("./weights/yolov4-tiny-416", tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures["serving_default"]
     batch_data = tf.constant(images)
     pred_bbox = infer(batch_data)
