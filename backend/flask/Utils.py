@@ -74,11 +74,6 @@ def get_upscaled_images_with_vmaf_scores(original_image):
 
     lr_lanczos_upscaled = lr_lanczos_upscaled.resize((width, height))
     lr_sr_upscaled = lr_sr_upscaled.resize((width, height))
-    original_image.show(title="original")
-    lr_lanczos_upscaled.show(title="normal1")
-    lr_sr_upscaled.show(title="ai1")
-    lanczos_upscaled.show(title="normal2")
-    sr_upscaled.show(title="ai2")
 
     original_file_name = str(uuid4()) + ".yuv"
     sr_file_name = str(uuid4()) + ".yuv"
