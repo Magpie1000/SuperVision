@@ -120,7 +120,7 @@ def detect(original_image):
         images.append(image)
     images = np.asarray(images).astype(np.float32)
 
-    saved_model_loaded = tf.saved_model.load("./weights/yolov4-416", tags=[tag_constants.SERVING])
+    saved_model_loaded = tf.saved_model.load("./weights/yolov4-tiny-416", tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures["serving_default"]
     batch_data = tf.constant(images)
     pred_bbox = infer(batch_data)
