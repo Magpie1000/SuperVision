@@ -254,5 +254,13 @@ canvas, img {
 
 .navbar_btn:hover {
     color:#5F7B84;
-    font-weight: 500;
+}
+
+.loading {
+    position: absolute;
+    font-size: 22px;
+    width: 45px;
+    height: 45px;
+    left: 46%;
+    top: 46%;
 }

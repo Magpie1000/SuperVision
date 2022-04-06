@@ -10,6 +10,7 @@ type ImageUploadCardProps = {
   parentImgChange: Function;
   showCropImgModal?: Function;
   parentImgPreviewURL: string;
+  isFiltering?: boolean;
 };
 
 type DetectObj = {
@@ -23,16 +24,12 @@ type DetectObj = {
 
 type Size = number[]
 
-function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal, parentImgPreviewURL }: ImageUploadCardProps) {
-  const [file, setFile] = useState<Blob>(new Blob());
-  const [fileName, setFileName] = useState<string>("");
+function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal, parentImgPreviewURL, isFiltering }: ImageUploadCardProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   
   const [imgPreviewUrl, setImgPreviewUrl] = useState<string>("");
   const [isImgPreview, setIsImgPreview] = useState<boolean>(false);
-  const [originWidth, setOriginWidth] = useState<number>(0);
   const [width, setWidth] = useState<number>(0);
-  const [originHeight, setOriginHeight] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
 
   const [isDetected, setIsDetected] = useState<boolean>(false);
@@ -49,11 +46,7 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
     }
   }, [originImg])
 
-  // useEffect(() => {
-  //   handleImgChange(e)
-  // }, [parentImgPreviewURL])
-
-  function handleImgChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImgChange(event: React.ChangeEvent<HTMLInputElement>) {
     event.preventDefault();
 
     // 사진 미리보기
@@ -77,13 +70,20 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
         return false;
       }
 
-      setFile(uploadFile);
-      setFileName(event.target.files[0].name);
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
-          setImgPreviewUrl(reader.result);
-          setIsImgPreview(true);
-          detectImage(reader.result)
+          const temp = new Image()
+          temp.src = reader.result
+          console.log('temp.naturalWidth', temp.naturalWidth)
+          console.log('temp.naturalHeight', temp.naturalHeight)
+          if (temp.naturalWidth > 1095 || temp.naturalHeight > 1095) {
+            alert("파일 사이즈는 가로/세로 각각 1095px 미만이어야 합니다.");
+            return
+          } else {
+            setImgPreviewUrl(reader.result);
+            setIsImgPreview(true);
+            detectImage(reader.result)
+          }
         }
       };
       reader.readAsDataURL(uploadFile);
@@ -109,14 +109,11 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
       .then((res) => {
         console.log("handleImgChange 성공", res);
         const image = document.querySelector("#preview_img") as HTMLImageElement
-        console.log('detecting', image)
         if (image) {
           const originWidth = image.naturalWidth
           const originHeight = image.naturalHeight
           setDetectList(res.data)
-          setOriginWidth(image.naturalWidth)
           setWidth(image.width)
-          setOriginHeight(image.naturalHeight)
           setHeight(image.height)
           setCanvas(imgPreviewUrl, res.data, originWidth, originHeight)
         }
@@ -275,7 +272,7 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
 
   return (
     <div className="card_container">
-      
+
       {/* <div className="mb-2 font_2 main_color bold">원본</div> */}
 
       <form id="upload" action="/">
@@ -288,7 +285,7 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
       </div>
 
       {isImgPreview && (
-        <div>
+        <div className="relative">
           <img
             id="preview_img"
             className="clickable detect_img_card"
@@ -305,13 +302,23 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
             onClick={onClickUploadBtn}
           />
           }
+          {isFiltering && 
+          <div className="spinner-border loading" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          }
           {page === 'B' && !isDetected &&
-          <img
-            className="clickable full_img_card"
-            src={imgPreviewUrl}
-            alt="img"
-            onClick={onClickUploadBtn}
-          />
+          <div>
+            <img
+              className="clickable full_img_card"
+              src={imgPreviewUrl}
+              alt="img"
+              onClick={onClickUploadBtn}
+            />
+            <div className="spinner-border loading" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
           }
           {page === 'B' && isDetected &&
             <canvas id='canvas' className="clickable full_img_card" onMouseMove={handleSelectDetectedImg} onClick={handleClickDetectedImg}>Your browswer does not support HTML5 canvas</canvas>

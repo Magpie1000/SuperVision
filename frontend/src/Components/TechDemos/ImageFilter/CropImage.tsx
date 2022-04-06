@@ -10,7 +10,7 @@ import CropIcon from '@mui/icons-material/Crop';
 import CloseIcon from '@mui/icons-material/Close';
 
 type CropProps = {
-  src: string;
+  parentUploadImgChange: Function;
   parentImgChange: Function;
   showCropImgModal: Function;
 };
@@ -23,7 +23,7 @@ interface Crop {
   unit: 'px' | '%';
 }
 
-function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
+function CropImage({ parentUploadImgChange, parentImgChange, showCropImgModal }: CropProps) {
   // 파일 업로드
   const fileRef = useRef<HTMLInputElement>(null);
   const [originImg, setOriginImg] = useState<HTMLImageElement>();
@@ -66,7 +66,6 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
   }
 
   function getImage() {
-    console.log('getImage', document.querySelector("img.crop_img"))
     return new Promise(resolve => {
       resolve(document.querySelector("img.crop_img") as HTMLImageElement)
     })
@@ -99,8 +98,20 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
 
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
-          setImgPreviewUrl(reader.result);
-          setIsImgPreview(true);
+          const temp = new Image()
+          temp.src = reader.result
+          const dataURL = reader.result
+          setTimeout(() => {
+            console.log('temp.naturalWidth', temp.naturalWidth)
+            console.log('temp.naturalHeight', temp.naturalHeight)
+            if (temp.naturalWidth > 1095 || temp.naturalHeight > 1095) {
+              alert("파일 사이즈는 가로/세로 각각 1095px 미만이어야 합니다.");
+              return
+            } else {
+              setImgPreviewUrl(dataURL);
+              setIsImgPreview(true);
+            }
+          }, 300)
         }
       }
       reader.readAsDataURL(uploadFile);
@@ -163,12 +174,12 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
   }
 
 
-  // 완료시 백엔드 API 요청
+  // 완료 버튼 클릭시
   function handleOnComplete(event: React.ChangeEvent<HTMLInputElement>): void {
     if (!isImgPreview) {  // 이미지 업로드 안한 경우 return
       return
     }
-    console.log('originImg', originImg)
+    parentUploadImgChange(imgPreviewUrl)
     if (originImg && crop) {  // 자르기한 경우 처리
       let imgPos = originImg.getBoundingClientRect()
       getCroppedImg(originImg, crop, imgPos)!
@@ -179,6 +190,7 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
         const dataURL = res[1] as string
         const data = new FormData();
         data.append("image", file!)
+        showCropImgModal();
         const headers = {
           "Content-Type": "multipart/form-data",
         };
@@ -196,7 +208,6 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
             const srVmaf = res.data.sr_vmaf_score;
             console.log('dataURL', dataURL)
             parentImgChange(dataURL, normalImgSrc, srImgSrc, normalVmaf, srVmaf, true);
-            showCropImgModal();
           })
           .catch((err) => {
             console.log("handleImgChange 크롭O 에러", err);
@@ -207,6 +218,7 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
       const data = new FormData();
       const file = dataURLtoFile(imgPreviewUrl, 'file name') as File
       data.append("image", file)
+      showCropImgModal();
       const headers = {
         "Content-Type": "multipart/form-data",
       };
@@ -223,7 +235,7 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
           const srImgSrc = "data:image/jpeg;base64," + res.data.sr_upscaled;
           const srVmaf = res.data.sr_vmaf_score;
           parentImgChange(imgPreviewUrl, normalImgSrc, srImgSrc, normalVmaf, srVmaf, true);
-          showCropImgModal();
+          // showCropImgModal();
         })
         .catch((err) => {
           console.log("handleImgChange 크롭x 에러", err);
@@ -231,7 +243,7 @@ function CropImage({ src, parentImgChange, showCropImgModal }: CropProps) {
     }
   }
 
-
+  // 백엔드 API 요청
   
   return (
     <div className="crop_modal d-flex-column">
