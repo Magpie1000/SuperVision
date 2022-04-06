@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ImageUploadCard from "../../../Components/Cards/ImageUploadCard";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import ImageResultCard from "../../../Components/Cards/ImageResultCard";
@@ -84,10 +84,15 @@ function ImageFilterExperienceA() {
   const [showMagnify, setShowMagnify] = useState<boolean>(true);
 
   const [isCropModal, setIsCropModal] = useState<boolean>(false)
+  const [isFiltering, setIsFiltering] = useState<boolean>(false)
 
   const title: string = "Try SUPER VISION on {{ UPLOADED IMAGE }}";
   const content: string =
     "이미지를 업로드해서 일반 필터와 AI 필터의 화질 개선을 직접 확인하세요!\n이미지 업로드시 크롭하여 원하는 부분만 업로드가 가능합니다.";
+
+  useEffect(() => {
+    setIsFiltering(false)
+  }, [srImg])
 
   function parentImgChange(
     originImg: string,
@@ -104,6 +109,12 @@ function ImageFilterExperienceA() {
     setSrVmaf(parseInt(srVmaf));
     setIsImgPreview(isImgPreview);
     console.log("parentImgChange", originImg);
+  }
+
+  function parentUploadImgChange(originImg: string) {
+    setOriginImg(originImg)
+    setIsFiltering(true)
+    console.log('isFiltering', isFiltering)
   }
 
   function showCropImgModal() {
@@ -145,7 +156,7 @@ function ImageFilterExperienceA() {
                   </Tooltip>
                 </div>
               </div>
-              <ImageUploadCard page="A" originImg={originImg} parentImgChange={parentImgChange} parentImgPreviewURL={parentImgPreviewUrl} showCropImgModal={showCropImgModal} />
+              <ImageUploadCard page="A" originImg={originImg} parentImgChange={parentImgChange} parentImgPreviewURL={parentImgPreviewUrl} showCropImgModal={showCropImgModal} isFiltering={isFiltering} />
             </div>
             <ArrowRightIcon className="mt-5 mx-5" sx={{ color: "#F2FFFF", fontSize: 50 }} />
             <div className="me-5">
@@ -157,6 +168,7 @@ function ImageFilterExperienceA() {
                 setMousePos={sendMousePos}
                 pos={mousePos}
                 showMagnify={showMagnify}
+                isFiltering={isFiltering}
               />
             </div>
             <div className="mx-3">
@@ -168,6 +180,7 @@ function ImageFilterExperienceA() {
                 setMousePos={sendMousePos}
                 pos={mousePos}
                 showMagnify={showMagnify}
+                isFiltering={isFiltering}
               />
             </div>
             <VmafResult normalVmaf={normalVmaf} srVmaf={srVmaf} />
@@ -175,12 +188,11 @@ function ImageFilterExperienceA() {
         </div>
       </div>
       {
-      isCropModal &&
-      <div className="">
+      <div className="" style={{visibility: isCropModal ? undefined : "hidden" }}>
         <CropImage 
-          src="https://interbalance.org/wp-content/uploads/2021/08/flouffy-VBkIK3qj3QE-unsplash-scaled-e1631077364762.jpg"
           parentImgChange={parentImgChange}
           showCropImgModal={showCropImgModal}
+          parentUploadImgChange={parentUploadImgChange}
         ></CropImage>
       </div>
       }

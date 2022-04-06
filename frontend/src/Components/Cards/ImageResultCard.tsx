@@ -13,9 +13,10 @@ type ImageResultCardProps = {
   setMousePos: Function;
   pos: { x: number; y: number } | undefined;
   showMagnify: boolean;
+  isFiltering?: boolean;
 };
 
-function ImageResultCard({ page, title, file, imgPreviewUrl, isImgPreview, setMousePos, pos, showMagnify }: ImageResultCardProps) {
+function ImageResultCard({ page, title, file, imgPreviewUrl, isImgPreview, setMousePos, pos, showMagnify, isFiltering }: ImageResultCardProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
