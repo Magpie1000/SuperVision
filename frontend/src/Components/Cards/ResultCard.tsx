@@ -1,4 +1,4 @@
-import { MouseEvent } from "react";
+import { MouseEvent, useRef } from "react";
 import { styled } from "@mui/material/styles";
 import Magnify from "../Commons/Magnify";
 type ResultCardProps = {
@@ -19,10 +19,13 @@ const TitleSpan = styled("span")({
 });
 
 function ResultCard({ imgSrc, title, width, height, setMousePos, pos }: ResultCardProps) {
+  const divRef = useRef<HTMLDivElement>(null);
   const handleMove = (event: MouseEvent<HTMLElement>) => {
-    if (!imgSrc) return;
-    let mouseX = event.pageX - event.currentTarget.offsetLeft;
-    let mouseY = event.pageY - event.currentTarget.offsetTop;
+    if (!imgSrc || !divRef.current) return;
+    console.log(event, event.currentTarget.offsetLeft)
+    let mouseX = event.pageX - divRef.current?.getBoundingClientRect().left;
+    let mouseY = event.pageY - divRef.current?.getBoundingClientRect().top;
+    console.log(mouseX, mouseY)
     if (
       mouseX <= 0 ||
       mouseX > event.currentTarget.offsetWidth ||
@@ -47,6 +50,7 @@ function ResultCard({ imgSrc, title, width, height, setMousePos, pos }: ResultCa
         }}>
         <TitleSpan>{title}</TitleSpan>
         <div
+          ref={divRef}
           onMouseMove={handleMove}
           className="dashed_border d-flex justify-content-center align-items-center"
           style={{ overflow: "hidden", height, width }}>
