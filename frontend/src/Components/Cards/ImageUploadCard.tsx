@@ -76,8 +76,8 @@ function ImageUploadCard({ page, originImg="", parentImgChange, showCropImgModal
           temp.src = reader.result
           console.log('temp.naturalWidth', temp.naturalWidth)
           console.log('temp.naturalHeight', temp.naturalHeight)
-          if (temp.naturalWidth > 1095 || temp.naturalHeight > 1095) {
-            alert("파일 사이즈는 가로/세로 각각 1095px 미만이어야 합니다.");
+          if (temp.naturalWidth > 1500 || temp.naturalHeight > 1500) {
+            alert("파일 사이즈는 가로/세로 각각 1500px 미만이어야 합니다.");
             return
           } else {
             setImgPreviewUrl(reader.result);
