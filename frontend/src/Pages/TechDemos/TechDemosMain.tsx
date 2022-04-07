@@ -1,7 +1,3 @@
-import InsideContentCard from "../../Components/Cards/InsideContentCard";
-import ArrowRightIcon from "@mui/icons-material/ArrowRight";
-import OutsideContentCard from "../../Components/Cards/OutsideContentCard";
-import Btn from "../../Components/Commons/Btn";
 import { useInternalRouter } from "../../Router/routing";
 import HorizontalContentCard from "../../Components/Cards/HorizontalContentCard";
 // import { } from "../../../Assets/Image"
@@ -34,10 +30,7 @@ function ImageFilterMain() {
     <>
       <div className="relative">
         <div className="center container">
-          {/* <div className="big_title">
-            AI 및 일반 필터를 통한 화질 개선을 체험할 수 있어요!
-          </div> */}
-          <div className="d-flex flex-column">
+          <div className="d-flex flex-column align-items-center">
             <div className="my-4">
               <HorizontalContentCard
                 title={state.image.title}
