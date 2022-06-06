@@ -225,22 +225,35 @@ frontend
 ## 주요 화면
 
 ### 메인 페이지
+
 ![메인페이지](images/메인페이지.gif)
 
 ### 이미지 필터
+
 ![이미지필터](images/이미지필터.gif)
 
 ### 이미지 다운로드
+
 ![다운로드](images/다운로드.gif)
 
 ### 객체 탐지 기능 이미지 필터
+
 ![디텍팅필터](images/디텍팅필터.gif)
 
 ### 웹 캠 필터
+
 ![웹캠필터](images/웹캠필터.gif)
 
 ### 기술 소개 페이지
+
 ![기술설명](images/기술설명.gif)
 
 ### 퀵 스타트 페이지
+
 ![퀵스타트](images/퀵스타트.gif)
+
+## 가중치 파일 설정
+
+https://drive.google.com/drive/folders/1Z5L-8fIg8W8J2q9PpJCRhaV4ge3n9GiU?usp=sharing
+
+### 다운로드 받은 폴더를 backend/flask 디렉터리에 위치시킨다
